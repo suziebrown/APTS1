@@ -139,3 +139,45 @@ diffz <- (rb.grad(x,z+Delta)-rb.grad(x,z))/Delta
 rbind(diffx,diffz)
 rb.hess(x,z)
 #7h
+rb.taylor <- function(x, z, x0=0, z0=0) {
+  dif <- c(x-x0, z-z0)
+  rb(x0,z0) + sum((dif)%*%rb.grad(x0,z0)) + 0.5*dif%*%(rb.hess(x0,z0)%*%dif)
+}
+plot.tay <- function(x0=0,z0=0, xmin=-1.5,xmax=1.5,zmin=-0.5,zmax=1.5, col=2) {
+  seqx<-seq(xmin, xmax, 0.01)
+  seqz<-seq(zmin, zmax, 0.01)
+  mat.true <- outer(seqx, seqz, FUN=rb)
+  #mat.tay <- outer(seqx, seqz, FUN=rb.taylor, x0=0, z0=0)
+  mat.tay <- matrix(NA, length(seqx), length(seqz))
+  for (i in 1:length(seqx)){
+    for (j in 1:length(seqz)){
+      mat.tay[i,j] <- rb.taylor(i,j, x0=x0,z0=z0)
+    }
+  }
+  contour(seqx,seqz,log(mat.true, base=10))
+  contour(seqx,seqz,log(mat.tay, base=10), col=col, add=TRUE)
+  #contour(seqx,seqz,mat.true)
+  #contour(seqx,seqz,mat.tay, col=col, add=TRUE)
+}
+#7i
+plot.tay(x0=-1,z0=0.5)
+plot.tay(x0=0,z0=0)
+plot.tay(x0=1,z0=1)
+#7j
+plot.tay(x0=0.5,z0=0.5)
+
+#8b
+rb2 <- function(xz) {
+  rb(xz[1],xz[2])
+}
+rb.grad2 <- function(xz) {
+  rb.grad(xz[1],xz[2])
+}
+#8c
+optim(c(-0.5,1), rb2, method="Nelder-Mead")
+#8d
+optim(c(-0.5,1), rb2, method="BFGS")
+#8e
+optim(c(-0.5,1), rb2, gr=rb.grad2, method="BFGS")
+#8f
+optim(c(-0.5,1), rb2, gr=rb.grad2, method="CG", control=list(maxit=1e5))
